@@ -133,6 +133,13 @@ state "$H" feat/c1 - c1; expect judge "judge failed" "a malformed verdict fails 
 state "$H" feat/c1 failure c1;    expect merge "adlc/judge is 'failure'" "judge failure refused" "$S/agent-merge.sh" 7
 state "$H" feat/other success c1; expect merge "is not feat/c1" "branch/change mismatch refused" "$S/agent-merge.sh" 7
 state "$H" feat/c1 success c1; echo x > stray.py; expect merge "working tree not clean" "dirty tree refused" "$S/agent-merge.sh" 7; rm stray.py
+state "$H" feat/c1 success c1 '{"cross":"true"}'; expect merge "comes from a fork" "fork PR refused" "$S/agent-merge.sh" 7
+# Repo-controlled commands must not rewire git (where the token-bearing push goes, which hooks run).
+expect untrusted "changed this repo's git config or hooks" "a command that edits git config stops the kit" bash -c "source '$S/lib.sh'; run_untrusted 'git config adlc.test 1'"
+git config --unset adlc.test
+expect untrusted "changed this repo's git config or hooks" "a command that plants a hook stops the kit" bash -c "source '$S/lib.sh'; run_untrusted 'echo x > .git/hooks/post-checkout'"
+rm -f .git/hooks/post-checkout
+code untrusted 3 "exit code of the command is kept" bash -c "source '$S/lib.sh'; run_untrusted 'exit 3'"
 state "$H" feat/c1 success c1 '{"mergeable":"CONFLICTING"}'; expect merge "is not mergeable" "conflicting PR refused" "$S/agent-merge.sh" 7
 # The host answers UNKNOWN twice (still computing) before MERGEABLE: the adapter waits instead of refusing.
 state "$H" feat/c1 success c1 '{"mergeable":["UNKNOWN","UNKNOWN","MERGEABLE"]}'

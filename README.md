@@ -31,15 +31,15 @@ Your agent looks at how you work (code host, CI, agents and models, spec tool, s
 - **Eight commands** that carry work from idea to production: `/sessions`, `/intent`, `/handoff`, `/session-start`, `/checkpoint`, `/ship`, `/promote`, `/session-close`. They are plain markdown playbooks, so any agent can run them. → [docs/flow.md](docs/flow.md)
 - **Stages that hand off through files.** Intent, spec, build prompt, checkpoints and recaps are committed. A fresh session, another model or another person can pick up exactly where the last one stopped.
 - **An independent judge.** A different model reviews every pull request against the spec's acceptance criteria and posts findings. No second model? A person can be the judge.
-- **Gates the agent cannot talk its way past.** Merge, tag and deploy run through scripts that check the judge, the final check, the tests and your policy on the exact commit. Prod needs UAT evidence and a rollback command.
-- **A guard.** Where your agent supports hooks, direct merges, tags, pushes to protected branches and edits to closed sessions are blocked before they run.
+- **Gates in scripts, not in prompts.** Merge, tag and deploy run through scripts that check the judge, the final check, the tests and your policy on the exact commit. Prod needs UAT evidence and a rollback command. Paired with branch protection on your host, the agent cannot merge around them.
+- **A guard.** Where your agent supports hooks, direct merges, tags, pushes to protected branches and edits to closed sessions are blocked before they run. It is a best-effort filter, not a sandbox.
 - **Honest limits.** [docs/security-model.md](docs/security-model.md) says what each layer stops, and what only server-side branch protection can stop.
 
 ## What works today
 
 | Part | Tested by maintainers | Bring your own (contract + template + tests) |
 |---|---|---|
-| Code host | GitHub (github.com, GitHub Enterprise) | GitLab, Bitbucket, Azure DevOps, Gitea, in-house |
+| Code host | GitHub (github.com) | GitLab, Bitbucket, Azure DevOps, Gitea, in-house |
 | Coding agent | Claude Code (commands, subagents, hooks) · Codex CLI (instructions + git hook) · any agent via git hooks | GitHub Copilot, Cursor, others |
 | Judge | Codex · Claude Code · a human reviewer | any CLI that can read files and return JSON |
 | Spec tool | OpenSpec · plain markdown | any tool with a folder per change |

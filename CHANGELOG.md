@@ -13,6 +13,12 @@ Format: [Keep a Changelog](https://keepachangelog.com). Versions: [SemVer](https
 - `install-repo.sh` with harness, spec, judge and host options; an agent install guide that writes an adaptation plan first.
 - Offline test suite, host conformance suite, public-content scan, CI on Linux and macOS.
 
+### Security
+- After a repo-controlled command (tests, deploys) the kit stops if the repo's git config or hooks changed, and reads the intent from the main branch again.
+- The agent never merges pull requests from forks.
+- Guard: quoting a word or adding git options no longer hides a blocked merge, tag or push.
+- Claude judge adapter ignores the settings and hooks of the checkout under review.
+
 ### Changed from the private version
 - Statuses are `adlc/*`. Repo config is `.adlc/config.env`. The pull request trailer is `adlc-change:`.
 - The kit can live anywhere; enabled repos are listed in the kit's `.adlc/repos`.

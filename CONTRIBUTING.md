@@ -19,7 +19,7 @@ New features in `core/` (new stages, new gates, new commands): open an issue bef
 2. **It explains why.** What problem, for whom. Link the issue.
 3. **It is proven.** The description contains the commands you ran and their result lines:
    ```
-   bash tests/run.sh          → ---- 154/154 passed
+   bash tests/run.sh          → ---- 168/168 passed
    bash tests/public-scan.sh  → public scan: clean
    ```
    "Should work" is not evidence.

@@ -86,7 +86,7 @@ if a[:2] == ["pr", "view"]:
     pr = st["prs"][a[2]]
     fields = opt("--json")
     if fields == "state,headRefOid,headRefName,isCrossRepository":
-        done(f'{pr["state"]} {head(pr)} {pr["branch"]} false')
+        done(f'{pr["state"]} {head(pr)} {pr["branch"]} {pr.get("cross", "false")}')
     m = pr.get("mergeable", "MERGEABLE")
     if isinstance(m, list):          # a queue of answers: the host is still computing at first
         m = pr["mergeable"].pop(0) if len(m) > 1 and fields == "mergeable" else m[0]

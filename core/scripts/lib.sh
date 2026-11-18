@@ -53,10 +53,33 @@ agent_identity() {
 agent_identity
 
 # run_untrusted <shell command> [arg0 args...]: runs repo-controlled commands (tests, deploys) without the agent token.
+# The kit runs git with the token afterwards (tag, push), so the command must not have changed where
+# git sends it or what git runs: the repo's git config and hooks are compared before and after.
 run_untrusted() {
-  local v unset_args=(-u ADLC_HOST_TOKEN)
+  local v rc=0 before unset_args=(-u ADLC_HOST_TOKEN)
   for v in ${HOST_TOKEN_VARS:-}; do unset_args+=(-u "$v"); done
-  env "${unset_args[@]}" bash -c "$1" "${@:2}"
+  before=$(_git_wiring)
+  env "${unset_args[@]}" bash -c "$1" "${@:2}" || rc=$?
+  [ "$(_git_wiring)" = "$before" ] \
+    || die "the command changed this repo's git config or hooks (.git/config, .git/hooks); refusing to continue. Inspect them before running the kit here again."
+  return "$rc"
+}
+# _git_wiring → one hash over the repo's local git config and every file in its hooks folder.
+_git_wiring() {
+  python3 - "$(git rev-parse --git-common-dir)" <<'PY'
+import hashlib, os, sys
+g, h = sys.argv[1], hashlib.sha256()
+paths = [os.path.join(g, "config"), os.path.join(g, "config.worktree")]
+for root, _, names in os.walk(os.path.join(g, "hooks")):
+    paths += [os.path.join(root, n) for n in names]
+for p in sorted(paths):
+    h.update(p.encode())
+    try:
+        h.update(open(p, "rb").read())
+    except OSError:
+        h.update(b"<missing>")
+print(h.hexdigest())
+PY
 }
 
 is_protected_branch() { local b; for b in $ADLC_PROTECTED_BRANCHES; do [ "$b" = "$1" ] && return 0; done; return 1; }

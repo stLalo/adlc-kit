@@ -7,6 +7,8 @@ set -euo pipefail
 prompt="${1:?prompt file}"; schema="${2:?schema file}"; out="${3:?output file}"; model="${4:-}"
 command -v claude >/dev/null || { echo "claude CLI not found" >&2; exit 127; }
 args=(-p --output-format json --json-schema "$(cat "$schema")" --allowedTools "Read,Grep,Glob" --permission-mode default)
+# Only your user settings: the checkout under review must not bring its own hooks or permissions.
+args+=(--setting-sources user)
 [ -z "$model" ] || args+=(--model "$model")
 raw=$(claude "${args[@]}" < "$prompt")
 printf '%s' "$raw" | python3 -c '

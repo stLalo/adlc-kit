@@ -73,6 +73,8 @@ change=$(pr_change "$pr")
 # The PR body names the change whose intent sets the policy; bind it to the branch so a PR can't
 # borrow another change's merge: auto.
 [ "$branch" = "feat/$change" ] || die "PR $pr branch '$branch' is not feat/$change (from its adlc-change line)"
+# A fork's branch can share a name with a change; its author is not bound by this repo's rules.
+[ "$cross" = "false" ] || die "PR $pr comes from a fork: the owner merges this one"
 intent=$(intent_path "$change")
 [ "$(intent_field "$intent" merge)" = "auto" ] || die "intent says merge: $(intent_field "$intent" merge) — the owner merges this one"
 require_status "$sha" adlc/judge
@@ -90,6 +92,8 @@ else
   # PR code runs here: it gets no agent token.
   run_untrusted "$TEST_CMD" || die "tests failed on ${sha:0:7}"
   agent_identity fresh      # re-mint: the tests may outlast a short-lived token
+  intent=$(intent_path "$change")   # read again from the main branch: PR code just ran and could have rewritten the copy
+  [ "$(intent_field "$intent" merge)" = "auto" ] || die "intent no longer says merge: auto"
   merge_pr "$sha"
 fi
 [ -n "$merge_sha" ] || die "PR $pr has no merge commit"

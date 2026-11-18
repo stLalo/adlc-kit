@@ -70,3 +70,12 @@
 0	mkdir -p adapters/host && echo x > adapters/host/mine.sh
 0	kubectl get pods
 0	"$ADLC_KIT/core/scripts/kit-info.sh" add-x 2>&1 | head -20
+2	"gh" pr merge 3
+2	g\h pr merge 3
+2	git -c a=b tag v1.0.0
+2	git --no-pager tag -a v1 -m x
+2	git 'tag' v9
+0	git -c core.pager=cat tag --list
+0	git -c a=b log --oneline
+2	git push origin HEAD:ma""in
+2	git "push" origin main
