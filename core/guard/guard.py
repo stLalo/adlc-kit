@@ -146,6 +146,11 @@ WRITE = re.compile(
 KIT_SETTINGS = r"IDENTITY_ADAPTER|SECRETS_ADAPTER|SECRET_CMD|ADLC_PROTECTED_BRANCHES|ADLC_APP_\w+|ADLC_GITHUB_API|ADLC_KIT_PUSH"
 
 
+def unquote(text):
+    """The text as the shell sees it once quotes and escapes are gone: ma""in is main."""
+    return re.sub(r"[\"'\\]", "", text)
+
+
 def segments(cmd):
     """Split a shell line into simple commands (best effort: ; && || | newlines)."""
     return [s.strip() for s in re.split(r"\|\||&&|[;|\n]", cmd) if s.strip()]
@@ -168,14 +173,14 @@ def current_branch(where):
 
 
 def check_push(seg, cwd):
-    m = re.search(r"(?:\bgit\b(?:\s+-{1,2}[\w-]+(?:[= ]\S+)?)*\s+push\b|agent-push\.sh['\"]?)(.*)$", seg)
+    m = re.search(r"(?:\bgit\b(?:\s+-{1,2}[\w-]+(?:[= ]\S+)?)*\s+push\b|agent-push\.sh)(.*)$", unquote(seg))
     if not m:
         return
     c = re.search(r"\bgit\s+-C\s+(['\"]?)([^\s'\"]+)\1", seg)
     where = resolve(c.group(2), cwd) if c else cwd
     protected = protected_branches(where)
     names = "/".join(sorted(protected))
-    tokens = [x.strip("'\"") for x in m.group(1).split()]
+    tokens = m.group(1).split()
     if any(x in ("--tags", "--follow-tags") or "refs/tags/" in x or re.match(r"\+?v\d+\.\d+", x) for x in tokens):
         block("tags are pushed only by the kit scripts")
     if any(x in ("--all", "--mirror", "--prune") for x in tokens):
@@ -202,9 +207,10 @@ def check_push(seg, cwd):
 def check_bash(command, cwd, role=None):
     """Raise Blocked if this shell command line must not run. role = the harness's subagent name, if any."""
     flat = " ".join(command.split())
+    bare = unquote(flat)     # quoting a word must not hide a blocked command
 
     for pat, why in _host_rules():
-        if re.search(pat, flat):
+        if re.search(pat, flat) or re.search(pat, bare):
             block(why)
     secret = kit_setting("SECRET_BLOCK_PATTERNS")
     if secret and re.search(secret, flat):
@@ -212,8 +218,8 @@ def check_bash(command, cwd, role=None):
     if re.search(r"(^|[\s;&|(])(export\s+)?(" + KIT_SETTINGS + r")=(?!(\"\"|''|\s|$))", flat):
         block("kit settings are set only in the kit's .adlc/kit.env")
 
-    # git tag (incl. git -C <repo> tag): listing ok, creating/deleting not
-    for m in re.finditer(r"\bgit\b(?:\s+-C\s+\S+)?\s+tag\b([^;&|]*)", flat):
+    # git tag (incl. git -C <repo> / -c k=v / --opt before it): listing ok, creating/deleting not
+    for m in re.finditer(r"\bgit\b(?:\s+(?:-[cC]\s+\S+|--[\w-]+(?:=\S+)?))*\s+tag\b([^;&|]*)", bare):
         args = m.group(1).split()
         if args and not args[0].startswith(("-l", "--list", "-n", "--contains", "--points-at",
                                             "--sort", "--merged", "--no-merged")):

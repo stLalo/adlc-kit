@@ -50,7 +50,10 @@ What keeps the residual small in practice:
 
 - The kit stores no secrets. `kit.env` holds references, a secrets adapter resolves them at run time.
 - Tokens are passed through environment variables and credential helpers, never command arguments.
-- Repo-controlled commands (`TEST_CMD`, deploy and UAT commands) and the judge run with host credentials removed from their environment.
+- Repo-controlled commands (`TEST_CMD`, deploy and UAT commands) and the judge run with the agent's token removed from their environment. That is all that is removed: they still run as you, so with the `own-login` identity your host CLI login and credential helper stay within their reach. Use a bot identity and `merge: human` where that matters.
+- After a repo-controlled command, the kit refuses to continue if the repo's git config or hooks changed, and reads the intent from the main branch again.
+- The judge reads the pull request's checkout. Instruction files in it can try to steer the judge, like the diff itself can. The Claude judge adapter ignores the checkout's settings and hooks; treat the judge as a strong reviewer, not a hard boundary.
+- Pull requests from forks are never merged by the agent.
 - Session logs are markdown only; `session-save.sh` refuses anything else.
 
 ## Reporting a bypass
