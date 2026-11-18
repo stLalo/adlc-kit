@@ -1,0 +1,34 @@
+name: ci
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  suite:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Offline suite
+        run: bash tests/run.sh
+      - name: Public scan
+        run: bash tests/public-scan.sh
+      - name: Shellcheck
+        if: runner.os == 'Linux'
+        run: shellcheck -x -S warning core/scripts/*.sh adapters/*/*.sh adapters/harness/*/install.sh tests/*.sh
+  # The one required check. Branch protection requires "ci/gate" only, so the matrix can change freely.
+  gate:
+    name: ci/gate
+    if: always()
+    needs: [suite]
+    runs-on: ubuntu-latest
+    steps:
+      - run: test "${{ needs.suite.result }}" = "success"

@@ -1,0 +1,5 @@
+# Machine-local kit settings and the list of enabled repos: never committed.
+/.adlc/
+__pycache__/
+*.pyc
+.DS_Store

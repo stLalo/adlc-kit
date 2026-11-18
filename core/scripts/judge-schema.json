@@ -1,0 +1,37 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["verdict", "summary", "criteria", "findings"],
+  "properties": {
+    "verdict": { "type": "string", "enum": ["approve", "request-changes"] },
+    "summary": { "type": "string" },
+    "criteria": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["criterion", "met", "evidence"],
+        "properties": {
+          "criterion": { "type": "string" },
+          "met": { "type": "boolean" },
+          "evidence": { "type": "string" }
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["severity", "category", "file", "detail", "fix"],
+        "properties": {
+          "severity": { "type": "string", "enum": ["critical", "high", "medium", "low"] },
+          "category": { "type": "string", "enum": ["correctness", "security", "tests", "spec-drift", "maintainability"] },
+          "file": { "type": "string" },
+          "detail": { "type": "string" },
+          "fix": { "type": "string" }
+        }
+      }
+    }
+  }
+}

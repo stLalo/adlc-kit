@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Report a gate bypass or other vulnerability
+    url: https://github.com/stLalo/adlc-kit/security/advisories/new
+    about: Private report. Please do not open a public issue for a bypass.

@@ -1,0 +1,8 @@
+intent	Turn the owner's own words into a clear, approved intent.md (define session, planner model)	<repo> "<what you want, in your words>" | <repo> #<issue>
+handoff	Finish a define session: validate the spec, write BUILD_PROMPT.md, get approval, merge docs, queue the build session	[change-id]
+session-start	Start or resume a session (queued build, active, or in-review)	[session-id | change-id | repo]
+checkpoint	Append a resumable checkpoint to the active session's STATE.md	[optional note]
+ship	Take a finished build through verify, PR, judge, final check, merge and tag, UAT, (prod), close	[change-id]
+promote	Promote a UAT-tested release to prod: the releaser decides from UAT evidence; fails closed	<change-id> [tag-or-sha]
+session-close	Close the active session: complete, roll over leftover work, park in-review, or abandon	[complete | rollover | in-review | abandon]
+sessions	List open sessions and flag anything out of sync (read-only)	[all]

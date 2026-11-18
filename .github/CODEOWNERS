@@ -1,0 +1,6 @@
+# Gates and the guard need a maintainer who owns them.
+/core/guard/    @stLalo
+/core/scripts/  @stLalo
+/adapters/*/CONTRACT.md  @stLalo
+/docs/security-model.md  @stLalo
+/.github/       @stLalo

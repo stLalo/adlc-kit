@@ -1,0 +1,33 @@
+name: Compatibility report
+description: Tell us where you ran the kit and what happened. Five minutes.
+labels: [compatibility]
+body:
+  - type: markdown
+    attributes:
+      value: Leave out company names, internal hostnames, repository names and tokens.
+  - type: input
+    id: host
+    attributes: { label: Code host, placeholder: "GitLab self-managed 17, Bitbucket Cloud, GitHub Enterprise Server 3.14" }
+    validations: { required: true }
+  - type: input
+    id: agent
+    attributes: { label: Coding agent(s) and harness adapter, placeholder: "Cursor with git-hooks harness" }
+    validations: { required: true }
+  - type: input
+    id: judge
+    attributes: { label: Judge, placeholder: "codex, claude, human, own adapter" }
+  - type: input
+    id: platform
+    attributes: { label: OS and shell, placeholder: "macOS 15, bash 3.2" }
+  - type: input
+    id: version
+    attributes: { label: Kit version or commit }
+  - type: textarea
+    id: worked
+    attributes: { label: What worked }
+  - type: textarea
+    id: failed
+    attributes: { label: What did not work, description: Command and the error line. }
+  - type: textarea
+    id: adapted
+    attributes: { label: What you had to adapt, description: Anything from your adaptation plan worth sharing. }

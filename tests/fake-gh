@@ -1,0 +1,148 @@
+#!/usr/bin/env python3
+"""Fake `gh` for the offline tests. State lives in $FAKE_GH_STATE (json); the "remote" is the bare repo
+$FAKE_REMOTE. It answers exactly the calls adapters/host/github.sh makes, with the output shape that
+adapter's --jq expressions would produce."""
+import json, os, subprocess, sys, tempfile
+
+st_path, remote = os.environ["FAKE_GH_STATE"], os.environ["FAKE_REMOTE"]
+st = json.load(open(st_path)) if os.path.exists(st_path) else {}
+for k, v in (("prs", {}), ("statuses", {}), ("admins", []), ("issues", {}), ("labels", []), ("log", [])):
+    st.setdefault(k, v)
+a = sys.argv[1:]
+st["log"].append(" ".join(a))
+
+
+def save():
+    json.dump(st, open(st_path, "w"))
+
+
+def done(text=None):
+    save()
+    if text is not None:
+        print(text)
+    sys.exit(0)
+
+
+def git(*c, cwd=remote):
+    return subprocess.run(["git", "-C", cwd, *c], capture_output=True, text=True)
+
+
+def opt(name, default=None):
+    return a[a.index(name) + 1] if name in a else default
+
+
+def field(name):
+    return next((x.split("=", 1)[1] for x in a if x.startswith(name + "=")), None)
+
+
+def head(pr):
+    """Live head of an open PR: the branch tip on the remote."""
+    if pr["state"] == "OPEN":
+        tip = git("rev-parse", "-q", "--verify", f"refs/heads/{pr['branch']}").stdout.strip()
+        if tip:
+            pr["head"] = tip
+    return pr["head"]
+
+
+def files(pr):
+    out = git("diff", "--name-status", "-M", f"{pr.get('base', 'main')}...{head(pr)}").stdout
+    rows = []
+    for line in out.splitlines():
+        p = line.split("\t")
+        if p[0].startswith("R"):
+            rows.append([p[2], p[1], "renamed", "0" if p[0] == "R100" else "1"])
+        else:
+            rows.append([p[1], "", {"A": "added", "D": "removed"}.get(p[0], "modified"), "1"])
+    return rows
+
+
+if a[:2] == ["auth", "status"]:
+    done()
+if a[:2] == ["repo", "view"]:
+    done("o/r")
+if a[:2] == ["label", "create"]:
+    if a[2] not in st["labels"]:
+        st["labels"].append(a[2])
+    done()
+if a[:2] == ["label", "list"]:
+    done("\n".join(st["labels"]))
+if a[:2] == ["issue", "create"]:
+    n = str(len(st["issues"]) + 100)
+    st["issues"][n] = {"state": "OPEN", "title": opt("--title"), "body": open(opt("--body-file")).read()}
+    done(f"https://example.test/o/r/issues/{n}")
+if a[:2] == ["issue", "view"]:
+    i = st["issues"][a[2]]
+    done(i["state"] if opt("--json") == "state" else i["body"])
+if a[:2] == ["pr", "create"]:
+    n = str(max([int(k) for k in st["prs"]] + [0]) + 1)
+    st["prs"][n] = {"state": "OPEN", "branch": opt("--head"), "base": opt("--base", "main"), "head": "",
+                    "body": open(opt("--body-file")).read(), "comments": [], "labels": [], "reviews": []}
+    head(st["prs"][n])
+    done(f"https://example.test/o/r/pull/{n}")
+if a[:2] == ["pr", "list"]:
+    hits = [(n, p) for n, p in st["prs"].items() if p["branch"] == opt("--head")]
+    done(f"{hits[-1][0]} {hits[-1][1]['state']}" if hits else None)
+if a[:2] == ["pr", "diff"]:
+    pr = st["prs"][a[2]]
+    done(git("diff", f"{pr.get('base', 'main')}...{head(pr)}").stdout)
+if a[:2] == ["pr", "comment"]:
+    st["prs"][a[2]].setdefault("comments", []).append(open(opt("--body-file")).read())
+    done()
+if a[:2] == ["pr", "edit"]:
+    pr = st["prs"][a[2]]
+    if "--add-label" in a:
+        pr.setdefault("labels", []).append(opt("--add-label"))
+    if "--body-file" in a:
+        pr["body"] = open(opt("--body-file")).read()
+    done()
+if a[:2] == ["pr", "view"]:
+    pr = st["prs"][a[2]]
+    fields = opt("--json")
+    if fields == "state,headRefOid,headRefName,isCrossRepository":
+        done(f'{pr["state"]} {head(pr)} {pr["branch"]} false')
+    done({"body": pr.get("body", ""), "mergeable": pr.get("mergeable", "MERGEABLE"), "headRefOid": head(pr),
+          "mergeCommit": pr.get("merge_sha", ""), "comments": "\n".join(pr.get("comments", [])),
+          "labels": "\n".join(pr.get("labels", [])), "changedFiles": str(len(files(pr))),
+          "statusCheckRollup": ""}[fields])
+if a[0] == "api":
+    path = [x for x in a[1:] if x.startswith("repos/")][0]
+    parts = path.split("/")
+    if "/statuses/" in path:
+        st["statuses"].setdefault(parts[-1], {})[field("context")] = [field("state"), field("description") or ""]
+        done()
+    if path.endswith("/status"):
+        cur = st["statuses"].get(parts[-2], {})
+        jq = opt("--jq") or opt("-q") or ""
+        if "select(.context==" in jq:
+            ctx = jq.split('"')[1]
+            done(cur[ctx][0] if ctx in cur else None)
+        done("\n".join(f"{c}\t{v[0]}\t{v[1]}" for c, v in cur.items()))
+    if path.endswith("/files"):
+        done("\n".join("\t".join(r) for r in files(st["prs"][parts[-2]])))
+    if path.endswith("/reviews"):
+        done("\n".join(" ".join(r) for r in st["prs"][parts[-2]].get("reviews", [])))
+    if path.endswith("/permission"):
+        done("admin" if parts[-2] in st["admins"] else "write")
+    if path.endswith("/merge") and "PUT" in a:
+        n = parts[-2]; pr = st["prs"][n]
+        if field("sha") != head(pr) or pr["state"] != "OPEN":
+            save(); print("405 not mergeable", file=sys.stderr); sys.exit(1)
+        d = tempfile.mkdtemp(dir=os.path.dirname(st_path))   # inside the suite's temp dir
+        subprocess.run(["git", "clone", "-q", remote, d], check=True)
+        base = pr.get("base", "main")
+        for c in (["fetch", "-q", "origin", pr["branch"]], ["checkout", "-q", base],
+                  ["-c", "user.name=bot", "-c", "user.email=b@x", "merge", "--no-ff", "-q", "-m", f"Merge PR #{n}", "FETCH_HEAD"],
+                  ["push", "-q", "origin", base]):
+            r = git(*c, cwd=d)
+            if r.returncode:
+                save(); print(r.stderr, file=sys.stderr); sys.exit(1)
+        pr["state"], pr["merge_sha"], pr["method"] = "MERGED", git("rev-parse", "HEAD", cwd=d).stdout.strip(), field("merge_method")
+        done(pr["merge_sha"])
+    if "DELETE" in a and "/git/refs/heads/" in path:
+        branch = path.split("/git/refs/heads/", 1)[1]
+        r = git("update-ref", "-d", f"refs/heads/{branch}")
+        st.setdefault("deleted", []).append(branch)
+        done()
+save()
+print("fake gh: unhandled " + " ".join(a), file=sys.stderr)
+sys.exit(2)

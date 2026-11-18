@@ -1,0 +1,30 @@
+name: Adapter proposal
+description: Propose a host, harness, judge, spec, identity or secrets adapter before writing it.
+labels: [adapter]
+body:
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind
+      options: [host, harness, judge, spec, identity, secrets]
+    validations: { required: true }
+  - type: input
+    id: tool
+    attributes: { label: Tool and version }
+    validations: { required: true }
+  - type: textarea
+    id: gaps
+    attributes:
+      label: Contract gaps
+      description: Which contract functions can your tool not do, or only do weakly? (pinned merge, statuses per commit, reviews tied to a commit, hooks...)
+  - type: textarea
+    id: testing
+    attributes:
+      label: How you will test it
+      description: Do you have a scratch project to run the conformance suite against?
+  - type: checkboxes
+    id: contact
+    attributes:
+      label: Contact
+      options:
+        - label: I am willing to be named as the contact for issues about this adapter

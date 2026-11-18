@@ -1,0 +1,17 @@
+name: Bug
+description: Something in the kit does not do what the docs say.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: A way around a gate is a security report, not a bug. Use the private report link instead.
+  - type: textarea
+    id: what
+    attributes: { label: What happened, description: Command and output. Remove private names and tokens. }
+    validations: { required: true }
+  - type: textarea
+    id: expected
+    attributes: { label: What you expected }
+  - type: textarea
+    id: setup
+    attributes: { label: Setup, description: "Output of `core/scripts/kit-info.sh` (it prints no secrets), OS, kit version." }

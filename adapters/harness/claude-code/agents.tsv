@@ -1,0 +1,4 @@
+intent-critic	Challenges a draft intent.md before the owner approves it. Use in /intent after the first draft and after each major revision.	Read, Grep, Glob	ROLE_PLANNER
+intent-critic-deep	Second, deeper critique of an intent for multi-repo initiatives or high-risk changes (auth, data, infra, prod deploy). Use in /intent only in those cases, after intent-critic is satisfied.	Read, Grep, Glob	ROLE_CRITIC_DEEP
+release-gate	Release authority. Does the mechanical final check before merge (context final-check) and decides prod promotion from UAT evidence (context prod-approval). Use only from /ship and /promote.	Read, Grep, Glob, Bash	ROLE_RELEASER
+verifier	Fresh-context check that the build matches the spec before a PR is opened or a session is closed. Use in /ship step 1 and before /session-close.	Read, Grep, Glob, Bash	-

@@ -1,0 +1,72 @@
+# expected-exit<TAB>command[<TAB>role]   (2 = blocked, 0 = allowed). $ADLC_KIT is the kit under test.
+2	gh pr merge 3
+2	gh -R o/r pr merge 5
+2	gh api -X PUT "repos/o/r/pulls/${PR}/merge"
+2	gh api graphql -F query=@m.graphql
+2	gh api graphql -f query="mutation{createRef(input:{})}"
+2	gh api -X POST repos/o/r/merges -f base=main
+2	git push origin +main
+2	git push origin 'HEAD:main'
+2	git push --all origin
+2	"$ADLC_KIT/core/scripts/agent-push.sh" main
+2	agent-push.sh --force feat/x
+2	git push -f origin feat/x
+2	git push origin --delete feat/x
+2	git push origin :feat/x
+2	git push origin "refs/heads/*:refs/heads/*"
+2	git push origin refs/tags/v1.2.3-rc.1
+2	git push --no-verify origin feat/x
+2	gh api repos/o/r/git/refs --field ref=refs/tags/v1
+2	gh release create v1.0.0
+2	gh api repos/o/r/statuses/abc -f state=success
+2	git tag v1.0.0
+2	source "$ADLC_KIT/core/scripts/lib.sh" && post_status x
+2	cd "$ADLC_KIT/core/scripts" && source ./lib.sh
+2	bash -c "source $ADLC_KIT/core/scripts/lib.sh; post_status x"
+2	"$ADLC_KIT/adapters/identity/github-app.sh"
+2	TOKEN=$(bash "$ADLC_KIT/adapters/identity/github-app.sh")
+2	x=`$ADLC_KIT/adapters/identity/github-app.sh`
+2	cp "$ADLC_KIT/adapters/identity/github-app.sh" /tmp/x.sh && /tmp/x.sh
+2	cat "$ADLC_KIT/adapters/identity/github-app.sh" > /tmp/x.sh
+2	"$ADLC_KIT/adapters/secrets/command.sh" K=ref -- env
+2	IDENTITY_ADAPTER="own-login" "$ADLC_KIT/core/scripts/agent-merge.sh" 3
+2	export ADLC_PROTECTED_BRANCHES="feat/x"
+2	secret-tool lookup adlc-bot key
+2	"$ADLC_KIT/core/scripts/release-decision.sh" final-check approve abc x
+2	python3 -c "open(\".adlc/config.env\",\"w\")"
+2	gh pr review 5 --approve
+2	gh api -X POST repos/o/r/pulls/5/reviews -f event=APPROVE
+2	gh auth token
+2	gh pr edit 5 --remove-label "needs-human"
+2	cp /tmp/x "$ADLC_KIT/core/scripts/lib.sh"
+2	echo x > .adlc/config.env
+2	sed -i s/a/b/ "$ADLC_KIT/core/guard/guard.py"
+2	git -C "$ADLC_KIT" pull
+2	git -C "$ADLC_KIT" checkout -- .
+2	mv "$ADLC_KIT/core/scripts/lib.sh" /tmp/
+2	echo x > docs/sessions/s1/STATE.md
+2	kubectl apply -f prod.yaml
+0	git push origin feat/x && git checkout develop
+0	"$ADLC_KIT/core/scripts/agent-push.sh" -u feat/x && git fetch origin develop
+0	cat "$ADLC_KIT/adapters/identity/github-app.sh"
+0	bash -n "$ADLC_KIT/adapters/identity/github-app.sh"
+0	grep post_status "$ADLC_KIT/core/scripts/lib.sh"
+0	cp "$ADLC_KIT/core/scripts/lib.sh" /tmp/lib.copy
+0	agent-push.sh --quiet refs/heads/session/x:refs/heads/session/x
+0	(cd repo && "$ADLC_KIT/core/scripts/agent-merge.sh" 294)
+0	"$ADLC_KIT/core/scripts/host.sh" pr_create --base main --head feat/x --title "merge main" --body-file /tmp/b.md
+0	gh pr view 3 --json state,reviews
+0	gh api repos/o/r/commits/abc/status
+0	"$ADLC_KIT/core/scripts/release-decision.sh" final-check approve abc x	release-gate
+0	agent-push.sh -u origin feat/develop-x
+0	secret-tool lookup service db
+0	gh api graphql -f query="{viewer{login}}"
+0	gh pr review 5 --comment -b ok
+0	IDENTITY_ADAPTER="" "$ADLC_KIT/core/scripts/session-save.sh" s1
+0	git -C "$ADLC_KIT" log --oneline -3
+0	git tag --list
+0	echo done >> notes.txt
+0	source ./lib.sh
+0	mkdir -p adapters/host && echo x > adapters/host/mine.sh
+0	kubectl get pods
+0	"$ADLC_KIT/core/scripts/kit-info.sh" add-x 2>&1 | head -20

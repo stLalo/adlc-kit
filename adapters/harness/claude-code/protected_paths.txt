@@ -1,0 +1,4 @@
+# Files in a target repo that only the owner edits when the Claude Code harness is installed.
+# One regex per line, matched against the absolute path. Read by core/guard/guard.py.
+(^|/)\.claude/settings(\.local)?\.json$
+(^|/)\.claude/agents/release-gate\.md$
