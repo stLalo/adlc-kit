@@ -56,10 +56,16 @@ host_user_is_admin() { [ "$(gh api "repos/$(_gh_slug)/collaborators/$1/permissio
 host_pr_create() {     # --base <b> --head <h> --title <t> --body-file <f>  → PR number
   gh pr create "$@" | sed -n 's#.*/pull/\([0-9][0-9]*\).*#\1#p' | tail -1
 }
-host_pr_edit_body() { gh pr edit "$1" --body-file "$2" >/dev/null; }
+# Edits and labels go through the REST API: `gh pr edit` fails on older gh versions (it queries
+# classic projects, which GitHub removed).
+host_pr_edit_body() { gh api -X PATCH "repos/$(_gh_slug)/pulls/$1" -F "body=@$2" >/dev/null; }
 host_pr_comment() { gh pr comment "$1" --body-file "$2" >/dev/null; }
-host_pr_label_add() { gh pr edit "$1" --add-label "$2" >/dev/null; }
-host_label_ensure() { gh label create "$1" --color B60205 --description "$2" >/dev/null 2>&1 || gh label list --search "$1" --json name -q '.[].name' | grep -qxF "$1"; }
+host_pr_label_add() { gh api -X POST "repos/$(_gh_slug)/issues/$1/labels" -f "labels[]=$2" >/dev/null; }
+host_label_ensure() {      # <name> <description>: create the label unless it exists
+  local slug; slug=$(_gh_slug)
+  gh api "repos/$slug/labels/$1" >/dev/null 2>&1 \
+    || gh api -X POST "repos/$slug/labels" -f name="$1" -f color=B60205 -f description="$2" >/dev/null
+}
 host_issue_create() {  # --title <t> --body-file <f>  → issue number
   gh issue create "$@" | sed -n 's#.*/issues/\([0-9][0-9]*\).*#\1#p' | tail -1
 }

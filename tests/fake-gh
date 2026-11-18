@@ -60,12 +60,6 @@ if a[:2] == ["auth", "status"]:
     done()
 if a[:2] == ["repo", "view"]:
     done("o/r")
-if a[:2] == ["label", "create"]:
-    if a[2] not in st["labels"]:
-        st["labels"].append(a[2])
-    done()
-if a[:2] == ["label", "list"]:
-    done("\n".join(st["labels"]))
 if a[:2] == ["issue", "create"]:
     n = str(len(st["issues"]) + 100)
     st["issues"][n] = {"state": "OPEN", "title": opt("--title"), "body": open(opt("--body-file")).read()}
@@ -88,13 +82,6 @@ if a[:2] == ["pr", "diff"]:
 if a[:2] == ["pr", "comment"]:
     st["prs"][a[2]].setdefault("comments", []).append(open(opt("--body-file")).read())
     done()
-if a[:2] == ["pr", "edit"]:
-    pr = st["prs"][a[2]]
-    if "--add-label" in a:
-        pr.setdefault("labels", []).append(opt("--add-label"))
-    if "--body-file" in a:
-        pr["body"] = open(opt("--body-file")).read()
-    done()
 if a[:2] == ["pr", "view"]:
     pr = st["prs"][a[2]]
     fields = opt("--json")
@@ -107,6 +94,20 @@ if a[:2] == ["pr", "view"]:
 if a[0] == "api":
     path = [x for x in a[1:] if x.startswith("repos/")][0]
     parts = path.split("/")
+    if "PATCH" in a and parts[-2] == "pulls":
+        body = field("body")
+        st["prs"][parts[-1]]["body"] = open(body[1:]).read() if body.startswith("@") else body
+        done()
+    if path.endswith("/labels") and parts[-3] == "issues":
+        st["prs"][parts[-2]].setdefault("labels", []).append(field("labels[]"))
+        done()
+    if parts[-2] == "labels":
+        if parts[-1] in st["labels"]:
+            done()
+        save(); print("404 Not Found", file=sys.stderr); sys.exit(1)
+    if path.endswith("/labels"):
+        st["labels"].append(field("name"))
+        done()
     if "/statuses/" in path:
         st["statuses"].setdefault(parts[-1], {})[field("context")] = [field("state"), field("description") or ""]
         done()
