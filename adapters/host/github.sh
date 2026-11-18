@@ -26,7 +26,16 @@ host_pr_diff() { gh pr diff "$1"; }
 host_pr_labels() { gh pr view "$1" --json labels -q '.labels[].name'; }
 host_pr_checks() { gh pr view "$1" --json statusCheckRollup -q '.statusCheckRollup[] | [(.name // .context), (.conclusion // .state // "")] | @tsv'; }
 host_pr_comments() { gh pr view "$1" --json comments -q '.comments[].body'; }
-host_pr_mergeable() { [ "$(gh pr view "$1" --json mergeable -q .mergeable)" = "MERGEABLE" ]; }
+# GitHub computes mergeability in the background: right after a push it answers UNKNOWN for a few seconds.
+host_pr_mergeable() {
+  local m i
+  for i in 1 2 3 4 5 6 7 8 9 10; do
+    m=$(gh pr view "$1" --json mergeable -q .mergeable) || return 1
+    [ "$m" = UNKNOWN ] || break
+    sleep "${ADLC_HOST_WAIT:-3}"
+  done
+  [ "$m" = MERGEABLE ]
+}
 host_pr_merge_commit() { gh pr view "$1" --json mergeCommit -q .mergeCommit.oid; }
 host_pr_for_branch() {
   gh pr list --head "$1" --state all --limit 1 --json number,state -q '.[] | "\(.number) \(.state)"'

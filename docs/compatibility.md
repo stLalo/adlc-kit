@@ -15,7 +15,7 @@ What has been run, by whom, and how. A row is only as good as its evidence.
 
 | Host | Adapter | Tier | Evidence |
 |---|---|---|---|
-| GitHub (github.com) | `github` | Tested | `tests/run.sh` (fake CLI) and `tests/host-conformance.sh github` against a live repository |
+| GitHub (github.com) | `github` | Tested | `tests/run.sh` (fake CLI); `tests/host-conformance.sh github` against a live repository (38 checks); one live change from intent to rc tag, with three judge rounds |
 | GitHub Enterprise Server | `github` | Experimental | Same adapter; `host_push` and the app identity take the host from the remote and `ADLC_GITHUB_API`. Not run by maintainers. |
 | GitLab, Bitbucket, Azure DevOps, Gitea | none | Contract only | `adapters/host/_template.sh` |
 

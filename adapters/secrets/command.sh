@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Secrets adapter: command. usage: command.sh NAME=<ref>... -- <command...>
 # Reads each secret by running SECRET_CMD (set in kit.env) with the ref as its last argument, e.g.
-#   SECRET_CMD="op read"                      ref: op://vault/item/field
+#   SECRET_CMD="op read"                      ref: a vault/item/field reference
 #   SECRET_CMD="vault kv get -field=value"    ref: secret/adlc/app-key
 #   SECRET_CMD="pass show"                    ref: adlc/app-key
 # Runs <command> with each NAME set. Values never appear in argv. See adapters/secrets/CONTRACT.md.

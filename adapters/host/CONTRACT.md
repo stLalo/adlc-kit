@@ -36,7 +36,7 @@ A host adapter teaches the kit to talk to one code host (GitHub, GitLab, Bitbuck
 | `host_pr_labels` | `<pr>` | One label per line. |
 | `host_pr_checks` | `<pr>` | `<check name>\t<state>` per line (CI results; informational). |
 | `host_pr_comments` | `<pr>` | Comment bodies, oldest first. The judge counts its rounds from them. |
-| `host_pr_mergeable` | `<pr>` | Exit 0 only if the PR can merge without conflicts. |
+| `host_pr_mergeable` | `<pr>` | Exit 0 only if the PR can merge without conflicts. If the host computes this in the background, wait for the answer (bounded) instead of failing. |
 | `host_pr_merge_commit` | `<pr>` | Merge commit sha of a merged PR. |
 | `host_pr_for_branch` | `<branch>` | `<number> <OPEN\|MERGED\|CLOSED>` for the newest PR from that branch, or nothing. |
 | `host_pr_files` | `<pr>` | `<path>\t<old path or empty>\t<added\|modified\|removed\|renamed>\t<changed lines>` per file. **Must fail if the list is incomplete** (pagination, API caps): a short list could hide a code file in a docs-only merge. |

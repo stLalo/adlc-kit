@@ -13,7 +13,8 @@ fail=0 n=0
 ok()  { n=$((n+1)); echo "ok   $*"; }
 bad() { n=$((n+1)); fail=$((fail+1)); echo "FAIL $*"; }
 
-W=$(mktemp -d) || exit 1; trap 'rm -rf "$W"' EXIT
+# pwd -P: on macOS the temp folder sits behind a symlink, and git reports the resolved path.
+W=$(cd "$(mktemp -d)" && pwd -P) || exit 1; trap 'rm -rf "$W"' EXIT
 # Never touch real repos or the user's git config: isolated HOME/config, fail fast on setup errors.
 export HOME="$W" GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null
 unset ADLC_KIT ADLC_HOST_TOKEN ADLC_KIT_PUSH GITHUB_TOKEN
@@ -132,7 +133,10 @@ state "$H" feat/c1 - c1; expect judge "judge failed" "a malformed verdict fails 
 state "$H" feat/c1 failure c1;    expect merge "adlc/judge is 'failure'" "judge failure refused" "$S/agent-merge.sh" 7
 state "$H" feat/other success c1; expect merge "is not feat/c1" "branch/change mismatch refused" "$S/agent-merge.sh" 7
 state "$H" feat/c1 success c1; echo x > stray.py; expect merge "working tree not clean" "dirty tree refused" "$S/agent-merge.sh" 7; rm stray.py
-state "$H" feat/c1 success c1;    expect merge "tagged v0.1.0-rc.1" "happy path merges and tags" "$S/agent-merge.sh" 7
+state "$H" feat/c1 success c1 '{"mergeable":"CONFLICTING"}'; expect merge "is not mergeable" "conflicting PR refused" "$S/agent-merge.sh" 7
+# The host answers UNKNOWN twice (still computing) before MERGEABLE: the adapter waits instead of refusing.
+state "$H" feat/c1 success c1 '{"mergeable":["UNKNOWN","UNKNOWN","MERGEABLE"]}'
+ADLC_HOST_WAIT=0 expect merge "tagged v0.1.0-rc.1" "happy path merges and tags (waits out UNKNOWN)" "$S/agent-merge.sh" 7
 [ "$(git -C "$W/remote.git" tag)" = "v0.1.0-rc.1" ] && ok "merge: tag on remote" || bad "merge: tag on remote"
 git -C "$W/remote.git" log -1 --format=%s main | grep -q "Merge PR #7" && ok "merge: merge commit on main" || bad "merge: merge commit"
 git -C "$W/remote.git" rev-parse -q --verify refs/heads/feat/c1 >/dev/null && bad "merge: feature branch still on remote" || ok "merge: feature branch deleted"
